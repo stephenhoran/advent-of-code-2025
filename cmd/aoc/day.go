@@ -58,7 +58,7 @@ var DayCmd = &cobra.Command{
 			log.Fatalf("Error solving day %d part %d: %v", day, part, err)
 		}
 
-		fmt.Printf("Day %d, Part %d: %s\n (took %s)\n", day, part, result, time.Since(t))
+		fmt.Printf("Day %d, Part %d: %s (took %s)\n", day, part, result, time.Since(t))
 	},
 }
 
