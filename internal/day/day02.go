@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type Day2 struct{}
@@ -20,10 +21,26 @@ func (d *Day2) SolvePart1(input []byte) (string, error) {
 }
 
 func (d *Day2) SolvePart2(input []byte) (string, error) {
-	ranges := strings.Split(string(input), ",")
-	result := interator(ranges, isInvalidIDPart2)
+	var wg sync.WaitGroup
+	invalidIDsCount := 0
+	results := make(chan int, len(strings.Split(string(input), ",")))
 
-	return fmt.Sprintf("%d", result), nil
+	for _, r := range strings.Split(string(input), ",") {
+		wg.Add(1)
+		go func(r string) {
+			defer wg.Done()
+			results <- interatorConcurrent(r, isInvalidIDPart2)
+		}(r)
+	}
+
+	wg.Wait()
+	close(results)
+
+	for result := range results {
+		invalidIDsCount = invalidIDsCount + result
+	}
+
+	return fmt.Sprintf("%d", invalidIDsCount), nil
 }
 
 func interator(ranges []string, f func(int) bool) int {
@@ -38,6 +55,22 @@ func interator(ranges []string, f func(int) bool) int {
 			if f(i) {
 				invalidIDsCount = invalidIDsCount + i
 			}
+		}
+	}
+
+	return invalidIDsCount
+}
+
+func interatorConcurrent(ranges string, f func(int) bool) int {
+	invalidIDsCount := 0
+	// split the range into two parts and convert to integers
+	parts := strings.Split(ranges, "-")
+	part1, _ := strconv.Atoi(parts[0])
+	part2, _ := strconv.Atoi(parts[1])
+
+	for i := part1; i <= part2; i++ {
+		if f(i) {
+			invalidIDsCount = invalidIDsCount + i
 		}
 	}
 
